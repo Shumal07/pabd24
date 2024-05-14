@@ -14,14 +14,13 @@ def main(n_rooms: int):
     Function docstring
     """
     t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-    csv_path = f'C:/Users/shuma/PycharmProjects/pabd24/data/raw{n_rooms}_{t}.csv'
+    csv_path = f'../data/raw/{n_rooms}_{t}.csv'
     data = moscow_parser.get_flats(
         deal_type="sale",
         rooms=(n_rooms,),
-        with_saving_csv=True,
         additional_settings={
             "start_page": 1,
-            "end_page": 2,
+            "end_page": 50,
             "object_type": "secondary"
         })
     df = pd.DataFrame(data)
