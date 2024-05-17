@@ -33,8 +33,12 @@ def main(args):
 
     new_df = new_dataframe[new_dataframe['price'] < 30_000_000]
 
-    border = int(args.split * len(new_df))
-    train_df, val_df = new_df[0:border], new_df[border:-1]
+    # Перемешиваем данные
+    new_df_shuffled = new_df.sample(frac=1, random_state=42)
+
+    border = int(args.split * len(new_df_shuffled))
+    train_df, val_df = new_df_shuffled[:border], new_df_shuffled[border:]
+
     train_df.to_csv(OUT_TRAIN)
     val_df.to_csv(OUT_VAL)
     logger.info(f'Write {args.input} to train.csv and val.csv. Train set size: {args.split}')
