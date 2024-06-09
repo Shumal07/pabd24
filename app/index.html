@@ -2,7 +2,7 @@
 <head>
 
 </head>
-  <style>
+<style>
 body {
   background-color: powderblue;
 }
@@ -18,14 +18,32 @@ input:invalid {
 input:valid {
   border: 2px solid black;
 }
-  </style>
+</style>
 <body>
 
 <h1>House price predict app</h1>
 
-<form>
-  <label for="area">Area, m2:</label><br>
-  <input type="number" id="area" name="area" required min="1" max="100" value="44"><br><br>
+<form id="priceForm">
+  <label for="total_meters">Area, m2:</label><br>
+  <input type="number" id="total_meters" name="total_meters" required min="1" max="100" value="44"><br><br>
+  <label for="floor">Floor:</label><br>
+  <input type="number" id="floor" name="floor" required min="1" max="50" value="3"><br><br>
+  <label for="floors_count">Total Floors:</label><br>
+  <input type="number" id="floors_count" name="floors_count" required min="1" max="50" value="10"><br><br>
+  <label for="rooms_count">Rooms Count:</label><br>
+  <input type="number" id="rooms_count" name="rooms_count" required min="1" max="10" value="2"><br><br>
+  <label for="district">District:</label><br>
+  <input type="number" id="district" name="district" required min="0"><br><br>
+  <label for="street">Street:</label><br>
+  <input type="number" id="street" name="street" required min="0"><br><br>
+  <label for="underground">Underground:</label><br>
+  <input type="text" id="underground" name="underground" required value="some_station"><br><br>
+  <label for="residential_complex">Residential Complex:</label><br>
+  <input type="number" id="residential_complex" name="residential_complex" required min="0"><br><br>
+  <label for="price_per_sqm">Price per sqm:</label><br>
+  <input type="number" id="price_per_sqm" name="price_per_sqm" required min="0" value="100000"><br><br>
+  <label for="token">Enter secret token</label><br>
+  <input type="text" id="token" name="token" required><br><br>
   <input type="submit" value="Submit" id="submit_btn" >
 </form>
 
@@ -34,48 +52,54 @@ input:valid {
 <span id="result"></span>
 
 <script>
-//  const area = document.getElementById("area");
-//  const submit_btn = document.getElementById("submit_btn");
-//  const result = document.getElementById("result");
+  const form = document.getElementById("priceForm");
+  const result = document.getElementById("result");
 
   const ENDPOINT = "http://127.0.0.1:5000/predict";
 
-  submit_btn.addEventListener("click", submit_click, false);
+  form.addEventListener("submit", submit_click, false);
 
   function submit_click(event) {
     event.preventDefault();
-    if (area.valid){
-      console.log("Valid!");
-    }
-    let warn = "Wrong connection!";
-    let house_params = {area: area.value};
-    postJSON(house_params).then((response) => {
-      const price = response['price'];
-      result.innerHTML = price;
-    })
-    result.innerHTML = warn;
-  }
-
-async function postJSON(data) {
-  try {
-    const response = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+    const formData = new FormData(form);
+    const house_params = {};
+    formData.forEach((value, key) => {
+      house_params[key] = value;
     });
 
-    const result = await response.json();
-    console.log("Success:", result);
-    return result;
-  } catch (error) {
-    console.error("Error:", error);
+    let warn = "Wrong connection!";
+    postJSON(house_params, house_params.token).then((response) => {
+      if (response && response.price !== undefined) {
+        result.innerHTML = `Predicted Price: ${response.price} RUB`;
+      } else {
+        result.innerHTML = warn;
+      }
+    }).catch((error) => {
+      console.error("Error:", error);
+      result.innerHTML = warn;
+    });
   }
-}
 
+  async function postJSON(data, token) {
+    try {
+      const response = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      console.log("Success:", result);
+      return result;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  }
 </script>
 
 </body>
-
 </html>
