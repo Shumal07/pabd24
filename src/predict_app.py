@@ -8,7 +8,13 @@ app = Flask(__name__)
 CORS(app)
 
 MODEL_PATH = 'models/random_forest_v2.joblib'
-ENCODER_PATH = 'models/le_underground.joblib'
+ENCODER_PATHS = {
+    'district': 'models/le_district.joblib',
+    'street': 'models/le_street.joblib',
+    'underground': 'models/le_underground.joblib',
+    'residential_complex': 'models/le_residential_complex.joblib'
+}
+
 config = dotenv_values(".env")
 auth = HTTPTokenAuth(scheme='Bearer')
 
@@ -21,23 +27,23 @@ def verify_token(token):
     if token in tokens:
         return tokens[token]
 
-label_encoder = load(ENCODER_PATH)
+label_encoders = {key: load(path) for key, path in ENCODER_PATHS.items()}
 
-def encode_underground(value):
+def encode_feature(encoder, value):
     try:
-        return label_encoder.transform([value])[0]
+        return encoder.transform([value])[0]
     except ValueError:
-        return label_encoder.transform(['unknown'])[0]
+        return encoder.transform(['unknown'])[0]
 
 def predict(in_data: dict) -> int:
     total_meters = float(in_data['total_meters'])
     floor = int(in_data['floor'])
     floors_count = int(in_data['floors_count'])
     rooms_count = int(in_data['rooms_count'])
-    district = int(in_data['district'])
-    street = int(in_data['street'])
-    underground = encode_underground(in_data['underground'])
-    residential_complex = int(in_data['residential_complex'])
+    district = encode_feature(label_encoders['district'], in_data['district'])
+    street = encode_feature(label_encoders['street'], in_data['street'])
+    underground = encode_feature(label_encoders['underground'], in_data['underground'])
+    residential_complex = encode_feature(label_encoders['residential_complex'], in_data['residential_complex'])
     first_floor = floor == 1
     last_floor = floor == floors_count
     price_per_sqm = float(in_data['price_per_sqm'])
